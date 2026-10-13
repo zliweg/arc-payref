@@ -1,3 +1,4 @@
+import { reloadTestnetWorkspace } from './harness';
 // Synthetic transport only. Real testnet acceptance is reported separately.
 import { test, expect } from '@playwright/test';
 import { harness, importRequests, navigateTo, saved } from './harness';
@@ -26,7 +27,7 @@ test('synthetic: JSON-RPC rate limiting recovers within bounds, exhaustion prese
   await expect(evidence).toContainText('attempts=3');
   await expect(evidence).toContainText('0.01 USDC received');
 
-  await page.reload();
+  await reloadTestnetWorkspace(page);
   await expect(page.getByRole('note')).toContainText('Zero verified receipts does not mean unpaid');
   expect((await saved(page)).find(r=>r.request)?.hashes).toEqual([txHash]);
   await page.getByRole('button',{name:'Check all',exact:true}).click();

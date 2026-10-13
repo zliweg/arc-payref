@@ -1,3 +1,4 @@
+import { openTestnetWorkspace, reloadTestnetWorkspace } from './harness';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { paymentData, requestLink, verifyRequest } from '../../src/protocol';
@@ -7,7 +8,7 @@ import { connectWallet, harness, importRequests, key, loadPay, origin, saved, na
 
 test('synthetic: create, validate exact amount, sign, share, download and reload',async({page,context})=>{
   const state=await harness(context);
-  await page.goto('/requests/new');
+  await openTestnetWorkspace(page,'/requests/new');
   await expect(page.getByRole('button',{name:'Sign & create request'})).toBeDisabled();
   await connectWallet(page);
   await page.getByLabel('Request template').selectOption('Consulting session');
@@ -32,7 +33,7 @@ test('synthetic: create, validate exact amount, sign, share, download and reload
   expect(file.requests[0].request).toEqual(state.request);
   await navigateTo(page,'Payment requests');
   await expect(page.locator('.request-table')).toContainText('125.123456');
-  await page.reload();
+  await reloadTestnetWorkspace(page);
   await expect(page.locator('.request-table')).toContainText('SESSION-001');
   expect(state.sent).toHaveLength(0);expect(state.unexpected).toEqual([]);
   state.account=payer;
@@ -61,7 +62,7 @@ test('synthetic: pay once, pending is not paid, verify, share receipt, print and
   await page.getByRole('button',{name:'Verify receipt',exact:true}).click();
   await expect(page.getByRole('alert')).toContainText('RPC_READ_FAILED');
   await expect(page.locator('.verified-receipt')).toHaveCount(0);
-  await page.reload();await expect(page.locator('.request-title')).toBeVisible();
+  await reloadTestnetWorkspace(page);await expect(page.locator('.request-title')).toBeVisible();
   await connectWallet(page);await expect(page.getByRole('button',{name:'Check payment & fees',exact:true})).toBeDisabled();
   state.mined=true;
   // Reload resumes bounded read-only verification without another wallet send.
@@ -107,7 +108,7 @@ test('synthetic: JSON preview, partial rejection, merge, dedup, CSV and clean re
   expect(csv).toContain('"\'=1+1"');expect(csv).toContain('NOT_VERIFIED_IN_THIS_SESSION');
   const clean=await browser.newContext();await harness(clean);
   try{
-    const restored=await clean.newPage();await restored.goto(`${origin}/backups`);
+    const restored=await clean.newPage();await openTestnetWorkspace(restored,`${origin}/backups`);
     await restored.getByLabel('Import JSON backup').setInputFiles({name:'restored.json',mimeType:'application/json',buffer:backup});
     await expect(restored.getByRole('heading',{name:'2 valid · 0 rejected'})).toBeVisible();
     await expect(restored.getByRole('status')).toContainText('Validation finished: 2 valid, 0 rejected');
@@ -161,7 +162,7 @@ for(const failure of ['rejected','unknown'] as const)test(`synthetic: ${failure}
   await loadPay(page,state.request);await connectWallet(page);await preparePayment(page);await page.getByRole('button',{name:'Confirm & pay 0.01 USDC',exact:true}).click();
   await expect(page.getByRole('alert')).toContainText(failure==='rejected'?'rejected':'BROADCAST_UNKNOWN');
   expect((await saved(page)).find(r=>r.status)?.status).toBe(failure==='rejected'?'REJECTED':'UNKNOWN');
-  await page.reload();await expect(page.locator('.request-title')).toBeVisible();await connectWallet(page);
+  await reloadTestnetWorkspace(page);await expect(page.locator('.request-title')).toBeVisible();await connectWallet(page);
   const pay=page.getByRole('button',{name:'Check payment & fees',exact:true});
   if(failure==='unknown'){
     await expect(pay).toBeDisabled();state.mined=true;
@@ -210,7 +211,7 @@ test('synthetic: two tabs coordinate one payment and receive saved updates',asyn
 });
 
 test('synthetic: restore receipt link, saved hash, filtered CSV and oversized input rejection',async({page,context})=>{
-  const state=await harness(context);await page.goto('/backups');
+  const state=await harness(context);await openTestnetWorkspace(page,'/backups');
   await page.getByLabel('Restore from a PayRef link').fill(requestLink(state.request,origin,txHash));
   await page.getByRole('button',{name:'Review request',exact:false}).click();await expect(page.getByRole('heading',{name:'1 valid · 0 rejected'})).toBeVisible();
   expect(await saved(page)).toHaveLength(0);await page.getByRole('button',{name:'Import validated requests'}).click();
@@ -247,7 +248,7 @@ test('synthetic: cancellation during final RPC cannot declare full coverage',asy
 test('synthetic: invalid link/hash, wrong receipt, insufficient gas balance and self-payment block',async({page,context})=>{
   const state=await harness(context);await loadPay(page,state.request);await connectWallet(page);
   await page.getByRole('button',{name:'Check payment & fees',exact:true}).click();await expect(page.getByRole('alert')).toContainText('SELF_PAYMENT');
-  state.account=payer;state.balance=10_000n*10n**12n;await page.reload();await expect(page.locator('.request-title')).toBeVisible();await connectWallet(page);
+  state.account=payer;state.balance=10_000n*10n**12n;await reloadTestnetWorkspace(page);await expect(page.locator('.request-title')).toBeVisible();await connectWallet(page);
   await page.getByRole('button',{name:'Check payment & fees',exact:true}).click();await expect(page.getByRole('alert')).toContainText('INSUFFICIENT_BALANCE');expect(state.sent).toHaveLength(0);
   await page.getByLabel('Transaction hash',{exact:true}).fill('0x123');await page.getByRole('button',{name:'Verify receipt',exact:true}).click();await expect(page.getByRole('alert')).toContainText('INVALID_HASH');
   state.mined=true;state.receiptMismatch=true;await page.getByLabel('Transaction hash',{exact:true}).fill(txHash);await page.getByRole('button',{name:'Verify receipt',exact:true}).click();await expect(page.getByRole('alert')).toContainText('EVIDENCE_MISMATCH');await expect(page.locator('.verified-receipt')).toHaveCount(0);
@@ -256,7 +257,7 @@ test('synthetic: invalid link/hash, wrong receipt, insufficient gas balance and 
 
 test('synthetic: signing rejection and quota failure never say saved',async({page,context})=>{
   const state=await harness(context);state.signError=4001;
-  await page.goto('/requests/new');await connectWallet(page);await page.locator('input[name=reference]').fill('TEST-REJECTION');await page.locator('input[name=amount]').fill('1');
+  await openTestnetWorkspace(page,'/requests/new');await connectWallet(page);await page.locator('input[name=reference]').fill('TEST-REJECTION');await page.locator('input[name=amount]').fill('1');
   await page.getByRole('button',{name:'Sign & create request'}).click();await expect(page.getByRole('alert')).toContainText('rejected');expect(await saved(page)).toHaveLength(0);await expect(page.locator('.request-title')).toHaveCount(0);
   state.signError=0;
   await page.evaluate(()=>{Storage.prototype.setItem=()=>{throw new DOMException('Synthetic quota failure','QuotaExceededError');};});
@@ -265,8 +266,8 @@ test('synthetic: signing rejection and quota failure never say saved',async({pag
 });
 
 test('synthetic: corrupted local records remain intact and unavailable',async({page,context})=>{
-  const state=await harness(context);await page.goto('/requests');
-  await page.evaluate(k=>localStorage.setItem(k,'broken JSON'),key(state.request));await page.reload();
+  const state=await harness(context);await openTestnetWorkspace(page,'/requests');
+  await page.evaluate(k=>localStorage.setItem(k,'broken JSON'),key(state.request));await reloadTestnetWorkspace(page);
   await expect(page.getByRole('alert')).toContainText('STORAGE_READ');await expect(page.getByText('Records could not be loaded',{exact:true})).toBeVisible();
   await expect(page.getByRole('button',{name:'Check all'})).toBeDisabled();expect(await page.evaluate(k=>localStorage.getItem(k),key(state.request))).toBe('broken JSON');
 });
@@ -285,7 +286,7 @@ test('synthetic: scan persistence failure retains verified evidence and exposes 
 test('synthetic: mobile routes have usable controls without horizontal page overflow',async({page,context})=>{
   const state=await harness(context);await page.setViewportSize({width:390,height:844});await importRequests(page,[state.request]);
   for(const path of ['/','/requests','/requests/new','/activity','/backups','/receipt']){
-    await page.goto(path);await expect(page.locator('h1')).toBeVisible();
+    await openTestnetWorkspace(page,path);await expect(page.locator('h1')).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   }
   await loadPay(page,state.request);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

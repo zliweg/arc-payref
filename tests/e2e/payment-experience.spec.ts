@@ -1,3 +1,4 @@
+import { openTestnetWorkspace, reloadTestnetWorkspace } from './harness';
 // Isolated synthetic browser scenarios. These never use a real wallet or broadcast to Arc.
 import { test, expect } from '@playwright/test';
 import { requestLink, verifyRequest } from '../../src/protocol';
@@ -62,7 +63,7 @@ test('synthetic: stopped checks preserve pending, navigation and reload resume w
   await page.getByRole('button',{name:'Open TEST-001',exact:true}).click();
   await page.getByRole('link',{name:'Open payment page',exact:false}).click();
   await expect.poll(()=>state.receiptReads).toBeGreaterThan(reads);
-  await page.reload();
+  await reloadTestnetWorkspace(page);
   await expect(page.getByRole('region',{name:'Payment progress'})).toContainText('Checking');
   state.mined=true;
   await expect(page.locator('.verified-receipt')).toContainText('Payment verified');
@@ -163,7 +164,7 @@ test('synthetic: manual recovery success ends the original pending watcher',asyn
 
 test('synthetic: reconnect preserves site permission and explicit account selection connects the unshared account',async({page,context})=>{
   const state=await harness(context);state.account=payer;
-  await page.goto('/requests/new');await connectWallet(page);
+  await openTestnetWorkspace(page,'/requests/new');await connectWallet(page);
   await page.locator('input[name=reference]').fill('SWITCH-ACCOUNT-DRAFT');
   await page.locator('input[name=amount]').fill('0.01');
   await page.locator('textarea[name=description]').fill('Unsigned account-switch regression only.');
@@ -188,7 +189,7 @@ test('synthetic: reconnect preserves site permission and explicit account select
 test('synthetic: a non-first authorized account can be explicitly selected to sign the preserved request draft',async({page,context})=>{
   const state=await harness(context);const receivingAccount=state.request.message.payee;
   state.account=payer;state.accounts=[payer,receivingAccount];
-  await page.goto('/requests/new');await connectWallet(page);
+  await openTestnetWorkspace(page,'/requests/new');await connectWallet(page);
   await expect(page.locator('.wallet-menu small.address')).toHaveText(payer);
   await page.locator('input[name=reference]').fill('MULTI-ACCOUNT-DRAFT');
   await page.locator('input[name=amount]').fill('0.01');
@@ -216,7 +217,7 @@ test('synthetic: a non-first authorized account can be explicitly selected to si
 
 test('synthetic: wallet account events update the unsigned preview and disconnection preserves the draft',async({page,context})=>{
   const state=await harness(context);
-  await page.goto('/requests/new');await connectWallet(page);
+  await openTestnetWorkspace(page,'/requests/new');await connectWallet(page);
   await page.locator('input[name=reference]').fill('EVENT-ACCOUNT-DRAFT');
   await page.locator('input[name=amount]').fill('12.345678');
   state.account=payer;
@@ -237,7 +238,7 @@ test('synthetic: wallet account events update the unsigned preview and disconnec
 
 test('synthetic: account selection reconciles its final account after an earlier permission event read fails',async({page,context})=>{
   const state=await harness(context);state.account=payer;
-  await page.goto('/requests/new');await connectWallet(page);
+  await openTestnetWorkspace(page,'/requests/new');await connectWallet(page);
   await page.locator('input[name=reference]').fill('PERMISSION-EVENT-DRAFT');
   await page.locator('input[name=amount]').fill('0.01');
   state.permissionAccount=state.request.message.payee;
@@ -256,7 +257,7 @@ test('synthetic: account selection reconciles its final account after an earlier
 
 test('synthetic: failed account event synchronization blocks signing and reconnect restores verified account context',async({page,context})=>{
   const state=await harness(context);
-  await page.goto('/requests/new');await connectWallet(page);
+  await openTestnetWorkspace(page,'/requests/new');await connectWallet(page);
   await page.locator('input[name=reference]').fill('ACCOUNT-SYNC-FAILURE');
   await page.locator('input[name=amount]').fill('0.01');
   state.account=payer;state.chainReadErrors=1;

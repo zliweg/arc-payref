@@ -1,3 +1,4 @@
+import { openTestnetWorkspace, reloadTestnetWorkspace } from './harness';
 // Synthetic browser acceptance only. The harness blocks external traffic and never uses a real wallet or chain.
 import { readFile } from 'node:fs/promises';
 import { test, expect } from '@playwright/test';
@@ -26,7 +27,7 @@ test('synthetic: save a payment link before connecting a wallet, reopen the inbo
   await expect(inbox.locator('.badge')).toHaveText('Not checked');
   await expect(inbox).toContainText('not cloud sync');
   await expect(inbox).toContainText('wallet’s complete payment history');
-  await page.reload();
+  await reloadTestnetWorkspace(page);
   await expect(inbox.getByRole('heading',{name:state.request.message.reference,exact:true})).toBeVisible();
   await expect(inbox.locator('.badge')).toHaveText('Not checked');
   await inbox.getByRole('link',{name:'Review payment request',exact:true}).click();
@@ -37,7 +38,7 @@ test('synthetic: save a payment link before connecting a wallet, reopen the inbo
 
 test('synthetic: removing an inbox bookmark preserves the signed request, known hashes and unresolved attempt',async({page,context})=>{
   const state=await harness(context);
-  await page.goto('/inbox');
+  await openTestnetWorkspace(page,'/inbox');
   const bookmarkKey=`arc-payref:v1:inbox:${state.request.domain.chainId}:${state.request.requestId}`;
   const attempt:Attempt={version:1,id:'synthetic-inbox-unresolved',requestId:state.request.requestId,chainId:state.request.domain.chainId,payer,status:'UNKNOWN',hash:txHash,nonce:3,updatedAt:'2026-09-21T00:00:00.000Z',errorCode:'BROADCAST_UNKNOWN'};
   const attemptKey=`arc-payref:v1:attempt:${attempt.id}`;
@@ -48,7 +49,7 @@ test('synthetic: removing an inbox bookmark preserves the signed request, known 
     localStorage.setItem(attemptKey,JSON.stringify(attempt));
   },{requestKey:key(state.request),request:state.request,bookmarkKey,attemptKey,attempt,hash:txHash});
   const before=await page.evaluate(({requestKey,attemptKey})=>({request:localStorage.getItem(requestKey),attempt:localStorage.getItem(attemptKey)}),{requestKey:key(state.request),attemptKey});
-  await page.reload();
+  await reloadTestnetWorkspace(page);
   const inbox=page.getByRole('region',{name:'Payment inbox',exact:true});
   await expect(inbox.locator('.badge')).toHaveText('Wallet unresolved');
   await inbox.getByRole('button',{name:'Remove bookmark',exact:true}).click();
@@ -56,7 +57,7 @@ test('synthetic: removing an inbox bookmark preserves the signed request, known 
   await expect(inbox.getByRole('status')).toContainText('transaction hashes and payment attempts remain saved');
   expect(await page.evaluate(bookmarkKey=>localStorage.getItem(bookmarkKey),bookmarkKey)).toBeNull();
   expect(await page.evaluate(({requestKey,attemptKey})=>({request:localStorage.getItem(requestKey),attempt:localStorage.getItem(attemptKey)}),{requestKey:key(state.request),attemptKey})).toEqual(before);
-  await page.reload();
+  await reloadTestnetWorkspace(page);
   await expect(inbox.getByRole('heading',{name:'No saved payment requests',exact:true})).toBeVisible();
   expect((await saved(page)).find(record=>record.request)?.hashes).toEqual([txHash]);
   expect((await saved(page)).find(record=>record.status)).toMatchObject({...attempt});

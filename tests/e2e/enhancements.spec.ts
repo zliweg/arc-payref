@@ -1,3 +1,4 @@
+import { openTestnetWorkspace } from './harness';
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
@@ -9,7 +10,7 @@ test.describe('English UI in a Chinese browser locale',()=>{
   test.use({locale:'zh-CN'});
   test('synthetic: the custom upload control stays English and supports mouse and keyboard imports',async({page,context},testInfo)=>{
     const state=await harness(context);
-    await page.goto('/backups');
+    await openTestnetWorkspace(page,'/backups');
     const upload=page.getByLabel('Import JSON backup');
     await expect(page.locator('.upload-zone')).toContainText('Choose a JSON backup');
     // Native file-input labels are outside textContent; their visual presentation must be hidden.
@@ -32,7 +33,7 @@ test.describe('English UI in a Chinese browser locale',()=>{
     expect((await saved(page)).filter(record=>record.request)).toHaveLength(1);
     expect(await page.locator('body').innerText()).not.toMatch(/\p{Script=Han}/u);
     expect(state.sent).toHaveLength(0);
-    await page.goto('/requests/new');
+    await openTestnetWorkspace(page,'/requests/new');
     await expect(page.locator('input[name=deadline]')).toHaveAttribute('type','text');
     await expect(page.locator('input[name=deadline]')).toHaveAttribute('placeholder','YYYY-MM-DD HH:mm');
     await page.locator('.form-panel').screenshot({path:testInfo.outputPath('english-composer-empty-zh-locale.png')});
@@ -107,7 +108,7 @@ test('synthetic: damaged export metadata leaves requests usable and reports down
   await importRequests(page,[state.request]);
   await downloadJson(page,'Download backup');
   await page.evaluate(()=>localStorage.setItem('arc-payref:v1:exports','{damaged synthetic history'));
-  await page.goto('/requests');
+  await openTestnetWorkspace(page,'/requests');
   await expect(page.locator('.request-table tbody tr')).toHaveCount(1);
   await expect(page.locator('.request-table')).toContainText(state.request.message.reference);
   await expect(page.getByLabel('Backup reminder')).toContainText('Backup reminder unavailable');

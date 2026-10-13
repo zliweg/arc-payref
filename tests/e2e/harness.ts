@@ -114,6 +114,8 @@ export async function emitWalletEvent(page:Page,event:'accountsChanged'|'chainCh
 }
 export async function connectWallet(page:Page){
   await page.locator('.wallet-menu > summary').click();
+  // Synthetic scenarios explicitly select the fixture network; production defaults to mainnet.
+  if(await page.getByLabel('Network',{exact:true}).isEnabled())await page.getByLabel('Network',{exact:true}).selectOption(String(TESTNET));
   await page.getByRole('button',{name:'Connect wallet',exact:true}).click();
   await expect(page.getByRole('status')).toContainText('Wallet connected');
   await page.locator('.wallet-menu > summary').click();
@@ -124,7 +126,7 @@ export async function loadPay(page:Page,req:SignedRequest){
 }
 export async function saved(page:Page){return page.evaluate(()=>Object.entries(localStorage).filter(([k])=>k.startsWith('arc-payref:v1:request:')||k.startsWith('arc-payref:v1:attempt:')).map(([k,v])=>({key:k,...JSON.parse(v)})));}
 export async function importRequests(page:Page, requests:SignedRequest[]){
-  await page.goto('/backups');
+  await openTestnetWorkspace(page,'/backups');
   await page.getByLabel('Import JSON backup').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({version:1,requests:requests.map(request=>({request,hashes:[]}))}))});
   await expect(page.getByRole('heading',{name:`${requests.length} valid · 0 rejected`})).toBeVisible();
   await page.getByRole('button',{name:'Import validated requests'}).click();
@@ -138,4 +140,21 @@ export async function navigateTo(page:Page,label:string){
 export async function preparePayment(page:Page){
   await page.getByRole('button',{name:'Check payment & fees',exact:true}).click();
   await expect(page.getByRole('region',{name:'Payment confirmation'})).toBeVisible();
+}
+
+// Explicit UI network selection for testnet fixtures; no production default override.
+export async function openTestnetWorkspace(page:Page,path:string){
+  await page.goto(path);
+  await selectTestnetWorkspace(page);
+}
+export async function reloadTestnetWorkspace(page:Page){
+  await page.reload();
+  await selectTestnetWorkspace(page);
+}
+async function selectTestnetWorkspace(page:Page){
+  const menu=page.locator('.wallet-menu');
+  await menu.locator('summary').click();
+  const network=page.getByLabel('Network',{exact:true});
+  if(await network.isEnabled())await network.selectOption(String(TESTNET));
+  await menu.locator('summary').click();
 }

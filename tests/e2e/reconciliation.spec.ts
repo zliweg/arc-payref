@@ -1,3 +1,4 @@
+import { openTestnetWorkspace, reloadTestnetWorkspace } from './harness';
 // Synthetic browser acceptance only: public fixture wallet, Arc-shaped RPC, no real chain writes.
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
@@ -20,7 +21,7 @@ async function commitBusiness(page: Page, count = 1) {
   await expect(page.locator('.reconciliation-workspace').getByRole('status')).toContainText(`Saved ${count} business records`);
 }
 async function importBusiness(page: Page, rows: unknown[]) {
-  await page.goto('/receivables');
+  await openTestnetWorkspace(page,'/receivables');
   await uploadBusiness(page, JSON.stringify(rows), 'synthetic-business.json', rows.length);
   await commitBusiness(page, rows.length);
 }
@@ -41,7 +42,7 @@ async function requestFor(amount = '80000000', reference = 'SYNTHETIC-BUSINESS-8
 
 test('synthetic: mixed CSV preview rejects invalid rows without rounding and persists only validated declarations', async ({ page, context }) => {
   const state = await harness(context);
-  await page.goto('/receivables');
+  await openTestnetWorkspace(page,'/receivables');
   const csv = 'reference,amount,customer,note,chain_id\r\n' +
     'PRECISE-001,12.345678,"Customer, one","Line one\nLine two",\r\n' +
     'OVER-PRECISION,1.0000001,Rejected,,\r\n' +
@@ -64,7 +65,7 @@ test('synthetic: mixed CSV preview rejects invalid rows without rounding and per
   expect(await page.evaluate(() => 'injected' in window)).toBe(false);
   await expect(page.locator('.business-table tbody tr')).toHaveCount(2);
   await expect(page.locator('.business-table')).not.toContainText('Payment verified');
-  await page.reload();
+  await reloadTestnetWorkspace(page);
   expect(await businessRecords(page)).toEqual(records);
   expect(state.sent).toHaveLength(0); expect(state.unexpected).toEqual([]);
 });
@@ -154,7 +155,7 @@ test('synthetic: review notes survive refresh without changing a business discre
   expect(reviewed).toEqual({ ...initial, review: { state: 'reviewed', note: 'Synthetic review: payer contacted; discrepancy still unresolved.', updatedAt: reviewed.review.updatedAt } });
   await expect(page.locator('.business-table')).toContainText('Business differs');
   await expect(page.locator('.business-table')).toContainText('Not verified');
-  await page.reload();
+  await reloadTestnetWorkspace(page);
   expect(await businessRecords(page)).toEqual([reviewed]);
   await page.locator('.work-tabs').getByRole('link', { name: 'Exception review', exact: true }).click();
   await page.getByLabel('Review state', { exact: true }).selectOption('reviewed');
@@ -173,7 +174,7 @@ test('synthetic: concurrent review drafts preserve the first saved note and expl
   const original = (await businessRecords(page))[0];
   const other = await context.newPage();
   try {
-    await other.goto(origin + '/receivables');
+    await openTestnetWorkspace(other,origin + '/receivables');
     await other.getByRole('button', { name: `Review ${reference}`, exact: true }).click();
     // A pristine editor follows a newer saved note in the other window.
     await other.getByLabel('Business review note').fill('Shared starting note from window B.');
@@ -218,7 +219,7 @@ test('synthetic: safe comparison CSV and business JSON downloads have explicit r
   const clean = await browser.newContext();
   try {
     const cleanState = await harness(clean); const restored = await clean.newPage();
-    await restored.goto(origin + '/receivables');
+    await openTestnetWorkspace(restored,origin + '/receivables');
     // The comparison CSV deliberately cannot restore signatures or trust status columns.
     await restored.getByLabel('Import business records', { exact: true }).setInputFiles({ name: 'comparison.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
     await expect(restored.locator('.reconciliation-workspace').getByRole('alert')).toContainText('CSV');
@@ -288,7 +289,7 @@ test('synthetic: another tab relinking a business record during diagnosis cannot
     await page.getByLabel('Business transaction hash', { exact: true }).fill(txHash);
     await page.getByRole('button', { name: 'Diagnose transaction', exact: true }).click();
     await expect.poll(() => readBlocked).toBe(true);
-    await other.goto(origin + '/receivables');
+    await openTestnetWorkspace(other,origin + '/receivables');
     await other.getByRole('button', { name: `Review ${state.request.message.reference}`, exact: true }).click();
     await other.getByLabel('Link signed request').selectOption(nextRequest.requestId);
     await other.getByRole('button', { name: 'Link selected request', exact: true }).click();
@@ -311,7 +312,7 @@ test('synthetic: another tab relinking a business record during diagnosis cannot
 
 test('synthetic: a manual business draft creates and links a fresh signature without disclosing private labels or notes', async ({ page, context }) => {
   const state = await harness(context);
-  await page.goto('/receivables');
+  await openTestnetWorkspace(page,'/receivables');
   await page.locator('.manual-receivable > summary').click();
   const form = page.locator('.manual-receivable form');
   await form.locator('input[name=reference]').fill('PRIVATE-DRAFT-001');
@@ -362,7 +363,7 @@ test('synthetic: a clean mobile browser independently rechecks handoff evidence 
   const clean = await browser.newContext({ viewport: { width: 390, height: 844 } });
   try {
     const cleanState = await harness(clean); cleanState.request = state.request; cleanState.mined = true;
-    const verifier = await clean.newPage(); await verifier.goto(origin + '/handoff');
+    const verifier = await clean.newPage(); await openTestnetWorkspace(verifier,origin + '/handoff');
     await verifier.getByLabel('Open handoff JSON', { exact: true }).setInputFiles({ name: 'handoff.json', mimeType: 'application/json', buffer: Buffer.from(json) });
     const panel = verifier.getByRole('region', { name: 'Independent handoff verification' });
     await expect(panel).toContainText('File structure and request signatures checked');
