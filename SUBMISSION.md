@@ -54,9 +54,9 @@ Building Arc PayRef: helping small teams reconcile USDC receivables and independ
 
 ## Before final submission
 
-- The repository remains **Private** by explicit owner choice. Change it to Public before submission to satisfy the official requirement; this document does not authorize that change.
-- Paste the project material into a DoraHacks Build and complete the event submission. Actual form fields still require an authenticated review. This file is not a submitted application.
-- Confirm that this work has not already received Circle/Arc program funding and that the submitter has the right to submit it; these are eligibility facts, not inferred from the code.
+- The repository is **Public**, as authorized by the owner, and available for reviewer access.
+- Project material is being entered into the authenticated DoraHacks Build submission form. Final submission requires the owner's confirmation. This file is not a submitted application.
+- On 13 October 2026, the owner confirmed that the work has not received Circle/Arc program funding and that they have the right to submit it.
 - The MetaMask domain risk warning remains unresolved. Do not claim it is cleared. The no-wallet evidence review does not require a new payment.
 - Official deadline, last checked 13 October 2026: **14 October 2026, 23:59 ET / 15 October 2026, 11:59 Beijing**. Recheck for changes before submitting.
 - Rules: https://dorahacks.io/hackathon/arc-microgrants/detail

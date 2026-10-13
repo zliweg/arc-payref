@@ -90,4 +90,4 @@ The request backup and handoff package are different formats. Import `mainnet-pr
 - Signed links and exported business notes are readable by recipients. Signatures prove what a wallet signed, not identity, trustworthiness or delivery.
 - MetaMask has displayed a domain risk warning for this deployment. The last investigation found a `BLOCK` response from its URL-scanning service, but no matching public static-list entry or confirmed trigger. The warning is **unresolved**; no claim of clearance or instructions to disable protection are made.
 
-Source is currently private at the owner's request. Arc Microgrants requires a public repository before submission.
+Source is publicly available at https://github.com/zliweg/arc-payref for independent review.
