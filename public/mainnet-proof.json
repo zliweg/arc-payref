@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "requests": [
+    {
+      "request": {
+        "schemaVersion": 1,
+        "domain": {
+          "name": "Arc PayRef",
+          "version": "1",
+          "chainId": 5042
+        },
+        "message": {
+          "payee": "0xAA02D1e9d8a74dC7C680e233Ef4065344576C25E",
+          "token": "0x3600000000000000000000000000000000000000",
+          "memoContract": "0x5294E9927c3306DcBaDb03fe70b92e01cCede505",
+          "amount": "10000",
+          "reference": "PAYREF-MAINNET-001",
+          "description": "Arc PayRef mainnet acceptance: one payment between my own wallets.",
+          "expiresAt": "0",
+          "nonce": "0x3c1f3f5e5a79c60d2e4b040a50f4c2f46aaacf3a183c749641db656fe50be5ef",
+          "createdAtBlock": "25678813"
+        },
+        "requestId": "0xba6384bc55a9a528e097080ea4498cc5544b20cb7997fd0dd1d9993726711aca",
+        "signature": "0x1213c549caded585426be466d515f6827e6edb8e5261b5f75e0ad3a5a8bf4d1d1a94ed8c069ada7862dd76763a43ac5a572b71615fe057a3cce10d43df9fe95f1b"
+      },
+      "hashes": [
+        "0x4632b21af3fdbaad5c3f89599fcf6bc2e2a82bc93b24ba346c354badf0086e00"
+      ]
+    }
+  ]
+}
