@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent, MouseEvent } from 'react';
 import { formatUnits, getAddress, isAddress } from 'viem';
 import type { Address, Hex } from 'viem';
-import { MAINNET, TESTNET, network, networks } from './config';
+import { MAINNET, network, networks } from './config';
 import { decodeRequest, expired, requestLink } from './protocol';
 import type { SignedRequest } from './protocol';
 import { errorText, PayRefError, rejected } from './errors';
@@ -28,6 +28,7 @@ import { PaymentInbox, SaveToInboxButton } from './payment-inbox';
 import { PaymentQr } from './payment-qr';
 import { browserReceivables } from './receivables-store';
 import type { Receivable } from './receivables';
+import { MainnetShowcase, mainnetDemoParams } from './mainnet-showcase';
 import './reconciliation.css';
 import './experience.css';
 import './payment-experience.css';
@@ -35,7 +36,7 @@ import './payment-experience.css';
 const short = (s: string) => `${s.slice(0,8)}…${s.slice(-6)}`;
 
 export default function App() {
-  const [chainId,setChainId]=useState<number>(TESTNET);
+  const [chainId,setChainId]=useState<number>(MAINNET);
   const [wallets,setWallets]=useState<WalletOption[]>([]);
   const [walletId,setWalletId]=useState('');
   const walletChosen=useRef(false);
@@ -135,7 +136,7 @@ export default function App() {
   },[provider,chainId]);
   useEffect(()=>{
     setSelected(undefined);setInput('');setHash('');setReuseSource(undefined);setBusinessSource(undefined);
-    let active=true;const epoch=routeEpoch.current; const params=new URLSearchParams(route.split('#')[1]??'');const encoded=params.get('request');
+    let active=true;const epoch=routeEpoch.current; const routeParams=new URLSearchParams(route.split('#')[1]??'');const params=path==='/receipt'&&routeParams.get('demo')==='mainnet'&&!routeParams.has('request')?mainnetDemoParams():routeParams;const encoded=params.get('request');
     const business=params.get('receivable');
     if(path==='/requests/new'&&business){try{if(params.get('reuse'))throw new PayRefError('AMBIGUOUS_DRAFT','create','Choose one draft source.');const source=browserReceivables().list().find(item=>item.id===business);if(!source)throw new PayRefError('BUSINESS_MISSING','create','The business record is not saved in this browser.');if(source.requestId)throw new PayRefError('BUSINESS_ALREADY_LINKED','create','This business record already has a signed request. Review it before creating another request.');setBusinessSource(source);setChainId(source.chainId);}catch(e){setError(errorText(e));}}
     const reuse=params.get('reuse');if(path==='/requests/new'&&reuse){void browserRepository().requests().then(records=>{if(!active||epoch!==routeEpoch.current)return;const source=records.find(r=>r.request.requestId===reuse)?.request;if(!source)throw new PayRefError('MISSING_REQUEST','create','The original request is not saved in this browser.');setReuseSource(source);setChainId(source.domain.chainId);}).catch(e=>{if(active&&epoch===routeEpoch.current)setError(errorText(e));});}else setReuseSource(undefined);
@@ -306,7 +307,7 @@ export default function App() {
   async function mergeImport(){if(!preview)return;const epoch=routeEpoch.current;let saved=0;await locked('requests',async()=>{for(const entry of preview.entries){try{await browserRepository().saveRequest(entry.request,entry.hashes);saved++;}catch(cause){throw new PayRefError('PARTIAL_IMPORT','import',`Saved ${saved} of ${preview.entries.length} validated requests. Import stopped; original records were retained.`,{requestId:entry.request.requestId},{cause});}}});if(epoch===routeEpoch.current){setPreview(undefined);setNotice(`Imported ${saved} requests. Refresh their onchain status to verify payments.`);}}
   const nav:{href:string;label:string;icon:IconName}[]=[{href:'/',label:'Overview',icon:'grid'},{href:'/receivables',label:'Business receivables',icon:'list'},{href:'/exceptions',label:'Exception review',icon:'activity'},{href:'/handoff',label:'Handoff & recheck',icon:'archive'},{href:'/requests',label:'Payment requests',icon:'receipt'},{href:'/inbox',label:'To pay',icon:'wallet'},{href:'/receipt',label:'Verify receipt',icon:'shield'},{href:'/activity',label:'Wallet activity',icon:'activity'},{href:'/backups',label:'Backups & exports',icon:'archive'}];
   const headings:Record<string,[string,string]>={
-    '/':['Your payments, in perspective.','A clear view of your requests, receipts and what needs attention.'],
+    '/':['Know what each USDC payment settles.','For freelancers and small teams: compare what you expected, what was signed and what actually arrived on Arc. Hand over records someone else can independently recheck.'],
     '/requests':['Every payment has a story.','Keep your requests organized. Match the payment to the work.'],
     '/requests/new':['Good work deserves a clear request.','Create a signed USDC request your customer can review and verify.'],
     '/receipt':['Trust the evidence.','Independently verify a payment against the original signed request.'],
@@ -332,6 +333,8 @@ export default function App() {
         <div className="environment"><span><i/>{chainId===MAINNET?'MAINNET · REAL USDC':'TESTNET WORKSPACE · TEST USDC ONLY'}</span><span>Local records · No account required</span></div>
         <section className="page-heading"><div><p className="eyebrow">{path==='/requests/new'?'CREATE & SHARE':publicPage?'PAYMENT EVIDENCE':'LESS ADMIN. MORE CLARITY.'}</p><h1>{heading[0]}</h1><p className="lead">{heading[1]}</p></div>{workspace&&<a className="button primary" href="/requests/new"><Icon name="plus"/>New request</a>}</section>
         {storageError&&<div role="alert" className="message error">{storageError}</div>}{error&&<div role="alert" className="message error">{error}</div>}{notice&&<div role="status" className="message"><Icon name={busy?'clock':'check'}/><span>{notice}</span>{scanController&&<button className="text-button" onClick={()=>scanController.abort()}>Cancel scan</button>}</div>}
+        {path==='/'&&<MainnetShowcase/>}
+        {path==='/receipt'&&new URLSearchParams(route.split('#')[1]??'').get('demo')==='mainnet'&&<div className="message"><Icon name="shield"/><span>Real mainnet demonstration · 13 October 2026 · 0.01 USDC between the builder’s own wallets. Select Verify receipt below to query the chain again. No wallet or payment is needed.</span></div>}
         {(workspace||path==='/requests/new')&&loaded&&requests.length>0&&<section className="backup-reminder" aria-label="Backup reminder"><Icon name="archive"/><div><strong>{exportStatus?.error?'Backup reminder unavailable':`${exportStatus?.neverExported??0} requests not yet exported · ${exportStatus?.changed??0} updated since export`}</strong><p>{exportStatus?.error??(exportStatus?.lastExportedAt?`Last download initiated ${new Date(exportStatus.lastExportedAt).toLocaleString('en-US')}. Check your saved file.`:'Your records live in this browser. Download a JSON backup to keep a copy.')}</p></div><button className="secondary" disabled={busy} onClick={()=>void run(()=>exportRequests(requests,'payref-backup.json'))}>Download backup</button></section>}
         {(path==='/receivables'||path==='/exceptions')&&<ReconciliationWorkspace key={path+chainId} mode={path==='/receivables'?'receivables':'exceptions'} chainId={chainId} requests={requests} payments={payments} scans={results} onScan={refresh} onPayment={async(req,p)=>{setPayments(previous=>({...previous,[req.requestId]:mergePayments(previous[req.requestId]??[],[p])}));await persistVerifiedPayment(req,p);await reload();}}/>}
         {path==='/handoff'&&<HandoffWorkspace key={chainId} chainId={chainId} requests={requests} payments={payments} scans={results}/>}
