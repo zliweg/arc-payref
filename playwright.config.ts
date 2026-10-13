@@ -6,7 +6,7 @@ export default defineConfig({
   workers: 2,
   projects: [
     { name: 'synthetic', testMatch: ['workflows.spec.ts', 'enhancements.spec.ts', 'payment-experience.spec.ts', 'reconciliation.spec.ts', 'inbox-qr.spec.ts', 'scan-recovery.spec.ts'] },
-    { name: 'live-readonly', testMatch: 'live.spec.ts' },
+    { name: 'live-readonly', testMatch: ['live.spec.ts', 'mainnet-presentation.spec.ts'] },
   ],
   timeout: 30000,
   use: { baseURL: 'http://127.0.0.1:5188', channel: 'chrome', trace: 'retain-on-failure', screenshot: 'only-on-failure' },
