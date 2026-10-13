@@ -1,0 +1,49 @@
+.public-page .workspace-main{margin-left:0}
+.public-page .topbar{max-width:1120px;margin:auto;background:transparent;border-bottom:1px solid var(--border);padding:0 28px}
+.public-page main{max-width:940px;margin:auto;padding-top:20px}
+.public-page .page-heading{text-align:center;justify-content:center;margin:36px 0 28px}
+.public-page .page-heading h1{font-size:32px;max-width:none}
+.public-page .page-heading .lead{max-width:600px;margin:auto}
+.guest-brand{display:inline-flex;gap:4px;align-items:center;font-size:25px;font-weight:650;letter-spacing:-1.3px;color:#35482d;text-decoration:none}
+.guest-brand span{padding:0;font-size:17px;color:#91a46f}
+.guest-navigation{position:relative;font-size:11px;color:#657654}
+.guest-navigation summary{cursor:pointer;list-style:none;padding:9px}
+.guest-navigation nav{position:absolute;z-index:50;right:0;top:34px;width:185px;display:flex;flex-direction:column;background:white;border:1px solid #dfe6d4;box-shadow:0 9px 25px #263b3112;padding:9px;border-radius:8px}
+.guest-navigation a{padding:10px;color:#566b44;text-decoration:none;border-radius:5px}
+.guest-navigation a:hover{background:#f0f4e8}
+.change-request{display:block;margin:0 auto 15px;font-size:11px}
+.public-page .request-detail{padding:32px 40px;box-shadow:0 8px 35px #263b3107}
+.public-page .request-detail .payment-timeline{display:none}
+.payment-review{background:#fff;border:1px solid #dce5cf;border-radius:8px;padding:20px;margin:18px 0}
+.review-heading{display:flex;align-items:center;gap:9px;margin-bottom:17px;color:#536d3e}
+.review-heading strong{font-size:13px;font-weight:550}
+.review-heading .badge{margin-left:auto;font-size:10px}
+.review-heading h3{margin:0;font-size:13px}
+.payment-review dl{display:grid;grid-template-columns:minmax(140px,1fr) minmax(0,1.7fr);gap:13px;font-size:12px;margin:0}
+.payment-review dt{color:#78866a}
+.payment-review dd{margin:0;text-align:right;overflow-wrap:anywhere}
+.payment-review .review-total{font-weight:650;color:#38572b;font-size:14px}
+.payment-review .review-scope{border-top:1px dashed #dce5d0;margin:18px 0 8px;padding-top:14px;color:#6a7d55;font-size:11px}
+.payment-review .review-expiry{font-size:11px;color:#8a754c;margin:8px 0 0}
+.pay-buttons{display:flex;gap:10px}
+.pay-buttons button{flex:1;font-size:12px;padding:12px 10px}
+.watch-panel{border:1px solid #d9e1cc;background:#f6f8f0;border-radius:8px;padding:20px;margin:20px 0}
+.watch-panel p{font-size:12px;line-height:1.8;color:#65774f;margin:10px 0}
+.watch-panel .address{display:block;margin:8px 0 15px}
+.watch-panel small{display:block;font-size:10px;color:#8a957c;margin-top:12px;line-height:1.7}
+.watch-panel button{font-size:11px;padding:8px 12px}
+.watch-panel.checking .review-heading>svg{animation:watch-pulse 1.5s ease-in-out infinite}
+.watch-panel.verified{background:#edf5e4;border-color:#ccddba}
+.watch-panel.reverted,.watch-panel.rpc-error,.watch-panel.evidence-mismatch{background:#fff7ed;border-color:#ecd9bc}
+.backup-reminder{display:flex;align-items:center;gap:14px;border:1px solid #dfe5d4;border-radius:8px;padding:15px 18px;background:#f5f7ed;margin:18px 0 22px}
+.backup-reminder>svg{color:#83956a;flex-shrink:0}
+.backup-reminder>div{flex:1}
+.backup-reminder strong{font-size:11px;font-weight:500;color:#61754d}
+.backup-reminder p{font-size:10px;color:#889778;margin:5px 0 0;line-height:1.7}
+.backup-reminder button{font-size:11px;white-space:nowrap;padding:9px 12px}
+.backup-status{font-size:11px;color:#687f51;background:#f3f6ec;padding:10px 12px;border-radius:6px;margin:15px 0;line-height:1.8}
+.backup-status small{display:block;font-size:10px;color:#889778}
+@keyframes watch-pulse{50%{opacity:.45}}
+@media(max-width:620px){.public-page .topbar{padding:0 14px}.public-page main{padding:18px 14px 0}.public-page .page-heading{margin:25px 0}.public-page .page-heading h1{font-size:27px}.public-page .request-detail{padding:24px 18px}.guest-brand{font-size:22px}.guest-navigation summary{font-size:10px;padding:5px}.payment-review{padding:15px}.review-heading{flex-wrap:wrap;gap:8px}.payment-review dl{grid-template-columns:1fr;gap:5px}.payment-review dd{text-align:left;margin-bottom:9px}.pay-buttons{flex-direction:column}.backup-reminder{flex-wrap:wrap;padding:14px}.backup-reminder>div{min-width:200px}.backup-reminder button{margin-left:32px}.watch-panel{padding:16px}.watch-panel .address{font-size:10px}}
+@media print{.watch-panel,.backup-reminder,.backup-status,.change-request,.guest-navigation{display:none!important}.public-page .request-detail{box-shadow:none;padding:20px}}
+@media(prefers-reduced-motion:reduce){.watch-panel.checking .review-heading>svg{animation:none}}
